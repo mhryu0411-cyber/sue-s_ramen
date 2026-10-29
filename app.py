@@ -13,13 +13,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. 커스텀 CSS로 깔끔한 UI 다듬기
+# 2. 라면 감성을 담은 따뜻하고 깔끔한 커스텀 CSS 디자인
 st.markdown("""
     <style>
-    .main { background-color: #FAFAFA; }
-    .stButton>button { width: 100%; border-radius: 6px; background-color: #FF4B4B; color: white; font-weight: bold; }
-    .stButton>button:hover { background-color: #E03E3E; color: white; }
-    div.stMetric { background-color: #FFFFFF; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .main { background-color: #FFF9F5; }
+    .stButton>button { width: 100%; border-radius: 8px; background-color: #FF5722; color: white; font-weight: bold; border: none; }
+    .stButton>button:hover { background-color: #E64A19; color: white; }
+    div.stMetric { background-color: #FFFFFF; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    h1, h2, h3 { color: #2D3748; font-family: 'Apple SD Gothic Neo', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -82,7 +83,7 @@ df = pd.DataFrame(places_data)
 
 # 3. 상단 헤더 영역
 st.title("🍜 서울 라면맵 (Seoul Ramen Map)")
-st.markdown("거지맵 스타일의 참여형 서울 라면 맛집 공유 플랫폼입니다. 나만의 숨은 라면 성지를 제보해 주세요!")
+st.markdown("호로록! 침 고이는 서울 속 나만의 라면 성지를 공유하고 찾아보세요.")
 st.divider()
 
 # 4. 사이드바 구성 (검색, 필터, 제보)
@@ -93,9 +94,8 @@ with st.sidebar:
     
     st.divider()
     
-    st.subheader("➕ 서울 라면집 제보하기")
+    st.subheader("🔥 나만의 라면집 제보하기")
     
-    # 폼 선언 (문법 에러 수정 완료)
     add_form = st.form("add_form", clear_on_submit=True)
     with add_form:
         new_name = st.text_input("가게 이름")
@@ -136,33 +136,32 @@ if search_query:
     filtered_df = filtered_df[filtered_df['name'].str.contains(search_query, na=False)]
 filtered_df = filtered_df[filtered_df['price'] <= max_price]
 
-# 5. 메인 레이아웃: 좌측(지도) / 우측(깔끔한 카드 리스트)
+# 5. 메인 레이아웃: 좌측(지도) / 우측(카드 리스트)
 map_col, list_col = st.columns([1.6, 1])
 
 with map_col:
-    st.subheader("📍 서울 맛집 지도")
+    st.subheader("📍 서울 라면 맛집 지도")
     
-    # 서울 중심좌표 고정 또는 필터된 결과의 중심점 활용
     center_lat, center_lon = 37.5665, 126.9780
     if not filtered_df.empty and search_query:
         center_lat = filtered_df['lat'].mean()
         center_lon = filtered_df['lon'].mean()
 
-    # 💡 API 키 문제 해결을 위해 OpenStreetMap 타일 사용
+    # 💡 밝고 깔끔한 화이트 톤 디자인의 CartoDB Positron 타일 적용
     m = folium.Map(
         location=[center_lat, center_lon], 
         zoom_start=13, 
-        tiles="OpenStreetMap"
+        tiles="CartoDB positron"
     )
 
-    # 마커 루프
+    # 마커 루프 (라면 감성의 오렌지/레드 계열 마커 적용)
     for _, row in filtered_df.iterrows():
         popup_html = f"""
         <div style="font-family:sans-serif; width:180px;">
-            <h4 style="margin:0 0 5px 0; color:#333;">{row['name']}</h4>
+            <h4 style="margin:0 0 5px 0; color:#D32F2F;"><b>{row['name']}</b></h4>
             <p style="margin:2px 0; font-size:13px;"><b>가격:</b> {row['price']:,}원</p>
             <p style="margin:2px 0; font-size:13px;"><b>평점:</b> ⭐ {row['rating']}</p>
-            <p style="margin:5px 0 0 0; font-size:11px; color:#666;">{row['comment']}</p>
+            <p style="margin:5px 0 0 0; font-size:11px; color:#555;">{row['comment']}</p>
         </div>
         """
         
@@ -170,13 +169,13 @@ with map_col:
             location=[row['lat'], row['lon']],
             popup=folium.Popup(popup_html, max_width=220),
             tooltip=f"{row['name']} ({row['price']:,}원)",
-            icon=folium.Icon(color="orange", icon="utensils", prefix="fa")
+            icon=folium.Icon(color="red", icon="utensils", prefix="fa")
         ).add_to(m)
 
     st_folium(m, width="100%", height=600)
 
 with list_col:
-    st.subheader(f"📋 검색 결과 목록 ({len(filtered_df)}곳)")
+    st.subheader(f"📋 맛집 목록 ({len(filtered_df)}곳)")
     
     with st.container(height=580):
         if filtered_df.empty:
