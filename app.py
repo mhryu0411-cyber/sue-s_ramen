@@ -147,11 +147,11 @@ with map_col:
         center_lat = filtered_df['lat'].mean()
         center_lon = filtered_df['lon'].mean()
 
-    # 💡 밝고 깔끔한 화이트 톤 디자인의 CartoDB Positron 타일 적용
+    # 💡 API 키 제약이 없는 밝고 깔끔한 오픈소스 지도 타일 사용 (HOT 스타일 적용으로 화사한 느낌 부여)
     m = folium.Map(
         location=[center_lat, center_lon], 
         zoom_start=13, 
-        tiles="CartoDB positron"
+        tiles="OpenStreetMap.HOT"
     )
 
     # 마커 루프 (라면 감성의 오렌지/레드 계열 마커 적용)
