@@ -2,21 +2,19 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="슈의 알록달록 무지개 파스타 가게",
-    page_icon="🍝",
+    page_title="슈의 아슬아슬 팬케이크 챌린지",
+    page_icon="🥞",
     layout="centered"
 )
 
-# 스트림릿 메인 UI 및 완벽한 슈 게임 감성 웹앱 삽입
 game_html = """
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>슈의 파스타 가게</title>
+    <title>슈의 팬케이크 가게</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
-        
         body {
             margin: 0;
             padding: 0;
@@ -26,18 +24,19 @@ game_html = """
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
-        .game-container {
-            width: 650px;
-            background: #fffaed;
+        .container {
+            width: 700px;
+            background: #fffdfa;
             border: 5px solid #ffb6c1;
             border-radius: 25px;
             box-shadow: 0 10px 25px rgba(255, 182, 193, 0.4);
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             position: relative;
         }
-        .header-board {
+        .header {
             display: flex;
             justify-content: space-between;
             font-size: 18px;
@@ -46,103 +45,35 @@ game_html = """
             padding: 10px 20px;
             border-radius: 15px;
             border: 2px solid #ffc0cb;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-        .order-box {
-            background: #ffe4e1;
-            border: 2px dashed #ff69b4;
+        canvas {
+            background: #fffacd;
+            border: 4px solid #f0e68c;
             border-radius: 15px;
-            padding: 12px;
-            margin-bottom: 15px;
-        }
-        .order-title {
-            font-size: 20px;
-            color: #d2143a;
-            margin-bottom: 5px;
-        }
-        .order-recipe {
-            font-size: 15px;
-            color: #666;
-        }
-        .pot-section {
-            background: #e0ffff;
-            border: 4px solid #20b2aa;
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 15px;
-            min-height: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .pot-title {
-            font-size: 16px;
-            color: #008b8b;
-            margin-bottom: 5px;
-        }
-        .pot-items {
-            font-size: 18px;
-            color: #333;
-            min-height: 25px;
-        }
-        .ingredients-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .ingredient-btn {
-            background: #fff;
-            border: 3px solid #ff69b4;
-            border-radius: 15px;
-            padding: 12px;
-            font-family: 'Jua', sans-serif;
-            font-size: 16px;
+            display: block;
+            margin: 0 auto;
             cursor: pointer;
-            transition: 0.1s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        .ingredient-btn:hover {
-            background: #fff0f5;
-            transform: translateY(-3px);
+        .controls {
+            margin-top: 12px;
         }
-        .ingredient-btn:active {
-            transform: translateY(1px);
-        }
-        .action-row {
-            display: flex;
-            gap: 10px;
-        }
-        .btn-serve {
-            flex: 2;
-            background: #ff1493;
+        .action-btn {
+            background: #ff69b4;
             color: white;
             border: none;
-            border-radius: 15px;
-            padding: 12px;
+            border-radius: 20px;
+            padding: 12px 35px;
             font-family: 'Jua', sans-serif;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255,20,147,0.3);
+            box-shadow: 0 5px 15px rgba(255,105,180,0.4);
             transition: 0.1s;
         }
-        .btn-serve:hover { background: #ff69b4; }
-        .btn-reset {
-            flex: 1;
-            background: #d3d3d3;
-            color: #333;
-            border: none;
-            border-radius: 15px;
-            padding: 12px;
-            font-family: 'Jua', sans-serif;
-            font-size: 16px;
-            cursor: pointer;
+        .action-btn:active {
+            transform: scale(0.95);
         }
-        .btn-reset:hover { background: #c0c0c0; }
-        
-        /* 게임 오버 오버레이 */
-        .game-over-screen {
+        .game-over {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7);
@@ -154,178 +85,208 @@ game_html = """
             color: white;
             display: none;
         }
-        .btn-restart {
-            background: #ffeb3b;
-            color: #333;
-            border: none;
-            padding: 12px 30px;
-            font-size: 20px;
-            font-family: 'Jua', sans-serif;
-            border-radius: 30px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <div class="header-board">
-        <span id="score-board">점수: 0점</span>
-        <span id="time-board">남은 시간: 60초</span>
-        <span id="life-board">실패: 0/3</span>
+<div class="container">
+    <div class="header">
+        <span id="score">점수: 0점</span>
+        <span id="combo" style="color: #ff4500;">🔥 콤보: 0</span>
+        <span id="timer">남은 시간: 45초</span>
+        <span id="lives">실패: 0/3</span>
     </div>
 
-    <div class="order-box">
-        <div id="order-title" class="order-title">💡 손님의 주문: 로딩중...</div>
-        <div id="order-recipe" class="order-recipe">레시피 표시</div>
+    <canvas id="gameCanvas" width="660" height="380"></canvas>
+
+    <div class="controls">
+        <button id="actionBtn" class="action-btn" onclick="handleAction()">🥞 반죽 붓기 / 타이밍 맞추기!</button>
     </div>
 
-    <div class="pot-section">
-        <div class="pot-title">🍲 조리 냄비 (순서대로 투입됩니다)</div>
-        <div id="pot-items" class="pot-items">재료를 선택해주세요!</div>
-    </div>
-
-    <div class="ingredients-grid">
-        <button class="ingredient-btn" style="border-color: #ffd700;" onclick="addIngredient('noodle_yellow', '일반 면')">💛 일반 면</button>
-        <button class="ingredient-btn" style="border-color: #8fbc8f;" onclick="addIngredient('noodle_green', '시금치 면')">💚 시금치 면</button>
-        <button class="ingredient-btn" style="border-color: #ff4500;" onclick="addIngredient('sauce_tomato', '토마토 소스')">❤️ 토마토 소스</button>
-        <button class="ingredient-btn" style="border-color: #dda0dd;" onclick="addIngredient('sauce_cream', '크림 소스')">🤍 크림 소스</button>
-        <button class="ingredient-btn" style="border-color: #ffa07a;" onclick="addIngredient('topping_shrimp', '새우')">🦐 새우</button>
-        <button class="ingredient-btn" style="border-color: #f0e68c;" onclick="addIngredient('topping_cheese', '치즈')">🧀 치즈</button>
-    </div>
-
-    <div class="action-row">
-        <button class="btn-serve" onclick="serveDish()">🍽️ 손님에게 서빙하기!</button>
-        <button class="btn-reset" onclick="resetPot()">냄비 비우기</button>
-    </div>
-
-    <div id="game-over" class="game-over-screen">
-        <h2 style="font-size: 36px; color: #ffeb3b; margin-bottom: 10px;">✨ 게임 종료! ✨</h2>
-        <p id="final-score" style="font-size: 22px; margin-bottom: 20px;"></p>
-        <button class="btn-restart" onclick="startGame()">다시하기 🔄</button>
+    <div id="gameOverScreen" class="game-over">
+        <h2 style="font-size: 38px; color: #ffeb3b; margin-bottom: 10px;">✨ 게임 종료! ✨</h2>
+        <p id="finalScore" style="font-size: 22px; margin-bottom: 20px;"></p>
+        <button class="action-btn" style="background: #ffeb3b; color: #333;" onclick="startGame()">다시하기 🔄</button>
     </div>
 </div>
 
 <script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
 let score = 0;
-let timeLeft = 60;
+let combo = 0;
+let timeLeft = 45;
 let lives = 0;
 let isPlaying = false;
-let gameTimer = null;
-let currentOrder = null;
-let userIngredients = [];
-let userIngredientNames = [];
+let timerInterval = null;
 
-const recipes = [
-    { name: '새우 토마토 파스타', items: ['noodle_yellow', 'sauce_tomato', 'topping_shrimp'], names: ['일반 면', '토마토 소스', '새우'] },
-    { name: '치즈 크림 파스타', items: ['noodle_yellow', 'sauce_cream', 'topping_cheese'], names: ['일반 면', '크림 소스', '치즈'] },
-    { name: '초록 시금치 로제 파스타', items: ['noodle_green', 'sauce_tomato', 'topping_cheese'], names: ['시금치 면', '토마토 소스', '치즈'] },
-    { name: '특제 해물 크림 파스타', items: ['noodle_green', 'sauce_cream', 'topping_shrimp'], names: ['시금치 면', '크림 소스', '새우'] }
-];
+// 게임 단계: 1(반죽 타이밍), 2(뒤집기 타이밍), 3(시럽 뿌리기 타이밍)
+let gameStep = 1; 
+let gaugeX = 0;
+let gaugeDir = 5;
+let instructionText = "반죽 게이지가 중앙(초록색)에 왔을 때 버튼을 누르세요!";
+
+const stepsInfo = {
+    1: { name: "1단계: 반죽 붓기", targetMin: 260, targetMax: 300, desc: "노란 원 중앙에 맞추세요!" },
+    2: { name: "2단계: 뒤집기 타이밍", targetMin: 240, targetMax: 320, desc: "노릇하게 익었을 때 뒤집기!" },
+    3: { name: "3단계: 메이플 시럽 뿌리기", targetMin: 270, targetMax: 290, desc: "완벽한 순간에 시럽 투척!" }
+};
 
 function startGame() {
     score = 0;
-    timeLeft = 60;
+    combo = 0;
+    timeLeft = 45;
     lives = 0;
     isPlaying = true;
-    document.getElementById('game-over').style.display = 'none';
-    document.getElementById('score-board').innerText = `점수: ${score}점`;
-    document.getElementById('life-board').innerText = `실패: ${lives}/3`;
+    gameStep = 1;
+    gaugeX = 50;
     
-    generateNewOrder();
-    
-    if(gameTimer) clearInterval(gameTimer);
-    gameTimer = setInterval(() => {
+    document.getElementById('gameOverScreen').style.display = 'none';
+    updateUI();
+
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
         timeLeft--;
-        document.getElementById('time-board').innerText = `남은 시간: ${timeLeft}초`;
+        updateUI();
         if(timeLeft <= 0) {
             endGame();
         }
     }, 1000);
+
+    requestAnimationFrame(updateGame);
 }
 
-function generateNewOrder() {
-    const randomIndex = Math.floor(Math.random() * recipes.length);
-    currentOrder = recipes[randomIndex];
-    userIngredients = [];
-    userIngredientNames = [];
-    
-    document.getElementById('order-title').innerText = `💡 손님의 주문: "${currentOrder.name}"`;
-    document.getElementById('order-recipe').innerText = `[레시피: ${currentOrder.names.join(' ➔ ')}]`;
-    updatePotUI();
+function updateUI() {
+    document.getElementById('score').innerText = `점수: ${score}점`;
+    document.getElementById('combo').innerText = `🔥 콤보: ${combo}`;
+    document.getElementById('timer').innerText = `남은 시간: ${timeLeft}초`;
+    document.getElementById('lives').innerText = `실패: ${lives}/3`;
 }
 
-function addIngredient(id, name) {
+function handleAction() {
     if(!isPlaying) return;
-    if(userIngredients.length < 3) {
-        userIngredients.push(id);
-        userIngredientNames.push(name);
-        updatePotUI();
-    }
-}
 
-function resetPot() {
-    if(!isPlaying) return;
-    userIngredients = [];
-    userIngredientNames = [];
-    updatePotUI();
-}
+    let currentStepInfo = stepsInfo[gameStep];
+    let isPerfect = gaugeX >= currentStepInfo.targetMin && gaugeX <= currentStepInfo.targetMax;
+    let isGood = gaugeX >= currentStepInfo.targetMin - 40 && gaugeX <= currentStepInfo.targetMax + 40;
 
-function updatePotUI() {
-    const potEl = document.getElementById('pot-items');
-    if(userIngredientNames.length === 0) {
-        potEl.innerText = '재료를 순서대로 골라주세요!';
+    if(isPerfect) {
+        score += 150 + (combo * 20);
+        combo++;
+        showPopup("✨ 퍼펙트! 꿀맛 팬케이크!", "#ff1493");
+        nextStep();
+    } else if(isGood) {
+        score += 80;
+        combo = 0;
+        showPopup("👍 나쁘지 않아요!", "#20b2aa");
+        nextStep();
     } else {
-        potEl.innerText = userIngredientNames.join(' ➔ ');
-    }
-}
-
-function serveDish() {
-    if(!isPlaying) return;
-    if(userIngredients.length === 0) {
-        alert("냄비가 비어있어요! 재료를 넣어주세요.");
-        return;
-    }
-
-    let isMatch = true;
-    if(userIngredients.length !== currentOrder.items.length) {
-        isMatch = false;
-    } else {
-        for(let i=0; i<userIngredients.length; i++) {
-            if(userIngredients[i] !== currentOrder.items[i]) {
-                isMatch = false;
-                break;
-            }
-        }
-    }
-
-    if(isMatch) {
-        score += 100;
-        alert("✨ 완벽해요! 손님이 아주 맛있게 먹었습니다!");
-    } else {
-        lives += 1;
-        score = Math.max(0, score - 50);
-        alert("💥 주문과 다른 요리예요! 손님이 화를 냅니다!");
+        lives++;
+        combo = 0;
+        showPopup("💥 타이밍 실패! 태워먹었어요!", "#ff4500");
         if(lives >= 3) {
             endGame();
             return;
         }
+        nextStep();
     }
+    updateUI();
+}
+
+let popupMsg = "";
+let popupColor = "#333";
+let popupTimer = 0;
+
+function showPopup(msg, color) {
+    popupMsg = msg;
+    popupColor = color;
+    popupTimer = 30; // 30프레임 동안 표시
+}
+
+function nextStep() {
+    gameStep++;
+    if(gameStep > 3) {
+        gameStep = 1; // 한 세트 완성! 추가 보너스 점수
+        score += 300;
+        showPopup("🎉 특대형 무지개 팬케이크 완성! (+300점)", "#9370db");
+    }
+}
+
+function updateGame() {
+    if(!isPlaying) return;
+
+    // 게이지바 왕복 이동 (난이도 조절 가능)
+    gaugeX += gaugeDir * (1 + (combo * 0.15)); // 콤보가 쌓일수록 점점 빨라져서 긴장감 극대화!
+    if(gaugeX > 580 || gaugeX < 80) {
+        gaugeDir *= -1;
+    }
+
+    // 렌더링
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 배경 조리대 연출
+    ctx.fillStyle = "#fff8dc";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 팬케이크 프라이팬 그림
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, 160, 90, 0, Math.PI * 2);
+    ctx.fillStyle = "#d3d3d3";
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "#a9a9a9";
+    ctx.stroke();
+
+    // 팬케이크 단계별 시각 효과
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, 160, 65, 0, Math.PI * 2);
+    if(gameStep === 1) ctx.fillStyle = "#fffacd"; // 반죽 색
+    else if(gameStep === 2) ctx.fillStyle = `#deb887`; // 익어가는 색
+    else ctx.fillStyle = "#d2691e"; // 완성 직전 색
+    ctx.fill();
+
+    // 현재 단계 안내 텍스트
+    ctx.fillStyle = "#333";
+    ctx.font = "bold 20px 'Jua', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(stepsInfo[gameStep].name, canvas.width / 2, 45);
     
-    document.getElementById('score-board').innerText = `점수: ${score}점`;
-    document.getElementById('life-board').innerText = `실패: ${lives}/3`;
-    generateNewOrder();
+    ctx.font = "15px 'Jua', sans-serif";
+    ctx.fillStyle = "#666";
+    ctx.fillText(stepsInfo[gameStep].desc, canvas.width / 2, 70);
+
+    // 타이밍 게이지 바 배경
+    ctx.fillStyle = "#ddd";
+    ctx.roundRect(80, 290, 500, 25, 12);
+    ctx.fill();
+
+    // 퍼펙트 존 (초록색 영역)
+    let target = stepsInfo[gameStep];
+    ctx.fillStyle = "#98fb98";
+    ctx.fillRect(target.targetMin, 290, target.targetMax - target.targetMin, 25);
+
+    // 움직이는 타이밍 바늘
+    ctx.beginPath();
+    ctx.arc(gaugeX, 302, 14, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff1493";
+    ctx.fill();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 피드백 팝업 텍스트 출력
+    if(popupTimer > 0) {
+        ctx.fillStyle = popupColor;
+        ctx.font = "bold 22px 'Jua', sans-serif";
+        ctx.fillText(popupMsg, canvas.width / 2, 115);
+        popupTimer--;
+    }
+
+    requestAnimationFrame(updateGame);
 }
 
-function endGame() {
-    isPlaying = false;
-    clearInterval(gameTimer);
-    document.getElementById('final-score').innerText = `최종 점수: ${score}점 달성! 🏆`;
-    document.getElementById('game-over').style.display = 'flex';
-}
-
-// 게임 시작
+// 최초 시작
 startGame();
 </script>
 
@@ -333,5 +294,4 @@ startGame();
 </html>
 """
 
-# 뷰어 영역 높이를 넉넉하게 지정하여 잘림 방지
-components.html(game_html, height=550, scrolling=False)
+components.html(game_html, height=540, scrolling=False)
