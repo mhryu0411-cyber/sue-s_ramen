@@ -13,14 +13,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. 라면 감성을 담은 따뜻하고 깔끔한 커스텀 CSS 디자인
+# 2. 라면 감성을 담은 따뜻하고 세련된 커스텀 CSS 디자인
 st.markdown("""
     <style>
-    .main { background-color: #FFF9F5; }
-    .stButton>button { width: 100%; border-radius: 8px; background-color: #FF5722; color: white; font-weight: bold; border: none; }
-    .stButton>button:hover { background-color: #E64A19; color: white; }
-    div.stMetric { background-color: #FFFFFF; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    h1, h2, h3 { color: #2D3748; font-family: 'Apple SD Gothic Neo', sans-serif; }
+    .main { background-color: #FFF8F3; }
+    .stButton>button { width: 100%; border-radius: 8px; background-color: #FF4500; color: white; font-weight: bold; border: none; padding: 10px; }
+    .stButton>button:hover { background-color: #E03E00; color: white; }
+    div.stMetric { background-color: #FFFFFF; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    h1, h2, h3 { color: #1A202C; font-family: 'Apple SD Gothic Neo', sans-serif; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -147,18 +147,18 @@ with map_col:
         center_lat = filtered_df['lat'].mean()
         center_lon = filtered_df['lon'].mean()
 
-    # 💡 API 키 제약이 없는 밝고 깔끔한 오픈소스 지도 타일 사용 (HOT 스타일 적용으로 화사한 느낌 부여)
+    # 💡 API 키 제약 없이 상용 지도처럼 선명하고 깔끔한 Esri World Street Map 타일 적용
     m = folium.Map(
         location=[center_lat, center_lon], 
         zoom_start=13, 
-        tiles="OpenStreetMap.HOT"
+        tiles="Esri.WorldStreetMap"
     )
 
-    # 마커 루프 (라면 감성의 오렌지/레드 계열 마커 적용)
+    # 마커 루프 (라면 감성의 레드/오렌지 계열 마커 적용)
     for _, row in filtered_df.iterrows():
         popup_html = f"""
         <div style="font-family:sans-serif; width:180px;">
-            <h4 style="margin:0 0 5px 0; color:#D32F2F;"><b>{row['name']}</b></h4>
+            <h4 style="margin:0 0 5px 0; color:#FF4500;"><b>{row['name']}</b></h4>
             <p style="margin:2px 0; font-size:13px;"><b>가격:</b> {row['price']:,}원</p>
             <p style="margin:2px 0; font-size:13px;"><b>평점:</b> ⭐ {row['rating']}</p>
             <p style="margin:5px 0 0 0; font-size:11px; color:#555;">{row['comment']}</p>
@@ -169,7 +169,7 @@ with map_col:
             location=[row['lat'], row['lon']],
             popup=folium.Popup(popup_html, max_width=220),
             tooltip=f"{row['name']} ({row['price']:,}원)",
-            icon=folium.Icon(color="red", icon="utensils", prefix="fa")
+            icon=folium.Icon(color="orange", icon="utensils", prefix="fa")
         ).add_to(m)
 
     st_folium(m, width="100%", height=600)
