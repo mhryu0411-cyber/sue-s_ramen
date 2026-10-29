@@ -1,421 +1,338 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
+# Streamlit 페이지 설정
 st.set_page_config(
-    page_title="슈의 알록달록 스페셜 팬케이크 팩토리",
-    page_icon="🥞",
+    page_title="고군분투 리메이크 - 30년 차 개발자 에디션",
+    page_icon="🐱",
     layout="centered"
 )
 
-game_html = """
+st.title("🐱 고군분투! (Go Go! Pyun-chan!)")
+st.markdown("30년 차 개발자의 손길로 재현한 추억의 플래시 게임입니다. **스페이스바**를 눌러 점프하고, 벽에 부딪힐 때 **스페이스바를 연타**하여 벽에 붙어보세요!")
+
+# HTML5 + Canvas + JS 기반의 고군분투 게임 컴포넌트
+game_code = """
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>슈의 팬케이크 팩토리</title>
+    <title>고군분투 게임</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
         body {
             margin: 0;
-            padding: 0;
-            background: #fff0f5;
-            font-family: 'Jua', sans-serif;
+            background-color: #1a1a1a;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-        }
-        .container {
-            width: 740px;
-            background: #fffdfa;
-            border: 5px solid #ffb6c1;
-            border-radius: 25px;
-            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.5);
-            padding: 15px;
-            text-align: center;
-            position: relative;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 17px;
-            color: #555;
-            background: #fff;
-            padding: 10px 15px;
-            border-radius: 15px;
-            border: 2px solid #ffc0cb;
-            margin-bottom: 10px;
+            font-family: 'Arial', sans-serif;
         }
         canvas {
-            background: #fffacd;
-            border: 4px solid #f0e68c;
-            border-radius: 15px;
-            display: block;
-            margin: 0 auto;
-            cursor: pointer;
-        }
-        .action-panel {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        .action-btn {
-            background: #ff69b4;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 10px 25px;
-            font-family: 'Jua', sans-serif;
-            font-size: 18px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255,105,180,0.4);
-            transition: 0.1s;
-        }
-        .action-btn:active { transform: scale(0.95); }
-        .action-btn:hover { background: #ff1493; }
-        
-        .topping-grid {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .top-btn {
-            background: #fff;
-            border: 3px solid #ffb6c1;
-            border-radius: 12px;
-            padding: 6px 12px;
-            font-family: 'Jua', sans-serif;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .top-btn:hover { background: #ffe4e1; }
-
-        .game-over {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.75);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            display: none;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <span id="score">점수: 0점</span>
-        <span id="combo" style="color: #ff4500;">🔥 콤보: 0</span>
-        <span id="timer">남은 시간: 60초</span>
-        <span id="lives">실패: 0/3</span>
-    </div>
-
-    <canvas id="gameCanvas" width="700" height="360"></canvas>
-
-    <div class="action-panel" id="timingControl">
-        <button class="action-btn" onclick="executeTimingAction()">⚡ 타이밍 맞추기! (스페이스바)</button>
-    </div>
-
-    <div class="topping-grid" id="toppingControl" style="display:none;">
-        <span style="font-size: 16px; align-self: center; color: #d2143a; font-weight: bold;">토핑 선택:</span>
-        <button class="top-btn" onclick="selectTopping('딸기')">🍓 딸기</button>
-        <button class="top-btn" onclick="selectTopping('바나나')">🍌 바나나</button>
-        <button class="top-btn" onclick="selectTopping('블루베리')">🫐 블루베리</button>
-        <button class="top-btn" onclick="selectTopping('초코시럽')">🍫 초코시럽</button>
-    </div>
-
-    <div id="gameOverScreen" class="game-over">
-        <h2 style="font-size: 38px; color: #ffeb3b; margin-bottom: 10px;">🏆 게임 세트 클리어! 🏆</h2>
-        <p id="finalScore" style="font-size: 22px; margin-bottom: 20px;"></p>
-        <button class="action-btn" style="background: #ffeb3b; color: #333;" onclick="startGame()">다시하기 🔄</button>
-    </div>
-</div>
+<canvas id="gameCanvas" width="800" height="450"></canvas>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
+// 게임 상태 변수
+let gameState = "START"; // START, PLAYING, GAMEOVER
 let score = 0;
-let combo = 0;
-let timeLeft = 60;
-let lives = 0;
-let isPlaying = false;
-let timerInterval = null;
-let animId = null;
+let distance = 0;
+let coins = 0;
 
-// 게임 단계: 
-// 0: 주문 대기 / 시작 준비
-// 1: 반죽 짜기 (타이밍)
-// 2: 뒤집기 (타이밍)
-// 3: 토핑 올리기 (선택)
-// 4: 서빙 완료 대기
-let gameStage = 1;
-let gaugeX = 80;
-let gaugeDir = 4;
+// 플레이어 객체 (고양이 닌자)
+let player = {
+    x: 100,
+    y: 300,
+    width: 35,
+    height: 45,
+    vy: 0,
+    speed: 6,
+    isJumping: false,
+    isWallSliding: false,
+    facing: 'right',
+    jumpCount: 0
+};
 
-// 주문 시스템
-let currentOrder = null;
-let userToppings = [];
-const availableToppings = ['딸기', '바나나', '블루베리', '초코시럽'];
+// 물리 상수
+const gravity = 0.6;
+const jumpPower = -11;
+const wallSlideGravity = 1.5;
 
-const ordersList = [
-    { name: "상큼 딸기 팬케이크", req: "딸기" },
-    { name: "달콤 바나나 팬케이크", req: "바나나" },
-    { name: "건강 블루베리 팬케이크", req: "블루베리" },
-    { name: "진한 초코 팬케이크", req: "초코시럽" }
-];
+// 월드 오브젝트 (지붕, 벽, 장애물, 코인)
+let platforms = [];
+let hazards = [];
+let items = [];
 
-function startGame() {
+// 게임 초기화
+function initGame() {
     score = 0;
-    combo = 0;
-    timeLeft = 60;
-    lives = 0;
-    isPlaying = true;
-    gameStage = 1;
-    gaugeX = 80;
-    userToppings = [];
+    distance = 0;
+    coins = 0;
+    player.x = 100;
+    player.y = 250;
+    player.vy = 0;
+    player.isJumping = false;
+    player.isWallSliding = false;
+    player.jumpCount = 0;
     
-    generateNewOrder();
-    document.getElementById('gameOverScreen').style.display = 'none';
-    updateUI();
+    platforms = [
+        { x: 0, y: 360, width: 900, height: 90, type: 'roof' }
+    ];
+    hazards = [];
+    items = [];
+}
 
-    if(timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        timeLeft--;
-        updateUI();
-        if(timeLeft <= 0) {
-            endGame();
+// 맵 제너레이터 (무한 질주 생성)
+function generateWorld() {
+    let lastPlatform = platforms[platforms.length - 1];
+    if (lastPlatform.x + lastPlatform.width < player.x + 900) {
+        let pWidth = Math.floor(Math.random() * 250) + 180;
+        let pGap = Math.floor(Math.random() * 90) + 50; // 낭떠러지 간격
+        let pHeight = Math.floor(Math.random() * 60) + 320;
+        
+        let newX = lastPlatform.x + lastPlatform.width + pGap;
+        platforms.push({ x: newX, y: pHeight, width: pWidth, height: 150, type: 'roof' });
+
+        // 일정 확률로 벽(장애물 건물) 생성
+        if (Math.random() > 0.4) {
+            hazards.push({
+                x: newX + pWidth - 40,
+                y: pHeight - 120,
+                width: 40,
+                height: 120,
+                type: 'wall'
+            });
         }
-    }, 1000);
 
-    if(animId) cancelAnimationFrame(animId);
-    updateGame();
-}
-
-function generateNewOrder() {
-    currentOrder = ordersList[Math.floor(Math.random() * ordersList.length)];
-    userToppings = [];
-}
-
-function updateUI() {
-    document.getElementById('score').innerText = `점수: ${score}점`;
-    document.getElementById('combo').innerText = `🔥 콤보: ${combo}`;
-    document.getElementById('timer').innerText = `남은 시간: ${timeLeft}초`;
-    document.getElementById('lives').innerText = `실패: ${lives}/3`;
-}
-
-function switchControlPanel(stage) {
-    const timingCtrl = document.getElementById('timingControl');
-    const toppingCtrl = document.getElementById('toppingControl');
-    if(stage === 3) {
-        timingCtrl.style.display = 'none';
-        toppingCtrl.style.display = 'flex';
-    } else {
-        timingCtrl.style.display = 'flex';
-        toppingCtrl.style.display = 'none';
+        // 코인 생성
+        if (Math.random() > 0.3) {
+            items.push({
+                x: newX + 50,
+                y: pHeight - 60,
+                radius: 10,
+                collected: false
+            });
+        }
     }
+
+    // 화면 지난 오브젝트 제거
+    platforms = platforms.filter(p => p.x + p.width > player.x - 200);
+    hazards = hazards.filter(h => h.x + h.width > player.x - 200);
+    items = items.filter(i => i.x > player.x - 200);
 }
 
-function executeTimingAction() {
-    if(!isPlaying) return;
-
-    let targetMin = 280, targetMax = 340;
-    let isPerfect = gaugeX >= targetMin && gaugeX <= targetMax;
-    let isGood = gaugeX >= targetMin - 50 && gaugeX <= targetMax + 50;
-
-    if(isPerfect) {
-        score += 150 + (combo * 25);
-        combo++;
-        showPopup("✨ 퍼펙트 조리 성공!", "#ff1493");
-        progressStage();
-    } else if(isGood) {
-        score += 70;
-        combo = 0;
-        showPopup("👍 나쁘지 않아요!", "#20b2aa");
-        progressStage();
-    } else {
-        lives++;
-        combo = 0;
-        showPopup("💥 태워먹었어요! 실패!", "#ff4500");
-        if(lives >= 3) {
-            endGame();
+// 키 입력 처리
+window.addEventListener("keydown", e => {
+    if (e.code === "Space") {
+        e.preventDefault(); // 스크롤 방지
+        if (gameState === "START" || gameState === "GAMEOVER") {
+            initGame();
+            gameState = "PLAYING";
             return;
         }
-        progressStage();
-    }
-    updateUI();
-}
-
-function progressStage() {
-    gameStage++;
-    if(gameStage === 3) {
-        switchControlPanel(3); // 토핑 패널 오픈
-    } else if(gameStage > 4) {
-        // 완성 및 서빙 완료!
-        score += 200;
-        showPopup("🎉 완벽한 서빙 완료! (+200점)", "#9370db");
-        gameStage = 1;
-        switchControlPanel(1);
-        generateNewOrder();
-    }
-}
-
-function selectTopping(topName) {
-    if(!isPlaying || gameStage !== 3) return;
-    
-    if(topName === currentOrder.req) {
-        score += 100;
-        showPopup(`✨ 손님이 원한 ${topName} 토핑 얹기 성공!`, "#ff1493");
-        gameStage = 4; // 시럽/마무리 단계로
-        switchControlPanel(1);
-        // 바로 자동 완성 처리 후 다음 주문으로
-        setTimeout(() => {
-            score += 250;
-            showPopup("🍽️ 주문 서빙 대성공!", "#20b2aa");
-            gameStage = 1;
-            generateNewOrder();
-            updateUI();
-        }, 800);
-    } else {
-        lives++;
-        showPopup(`❌ 틀린 토핑이에요! (${topName})`, "#ff4500");
-        if(lives >= 3) {
-            endGame();
+        
+        if (gameState === "PLAYING") {
+            if (player.isWallSliding) {
+                // 벽에서 반대 방향으로 뛰어오르기 (벽킥)
+                player.vy = jumpPower * 1.1;
+                player.speed += 2; // 가속
+                player.isWallSliding = false;
+            } else if (!player.isJumping || player.jumpCount < 2) {
+                // 2단 점프
+                player.vy = jumpPower;
+                player.isJumping = true;
+                player.jumpCount++;
+            }
         }
-    }
-    updateUI();
-}
-
-window.addEventListener('keydown', (e) => {
-    if(e.code === 'Space' && gameStage !== 3) {
-        e.preventDefault();
-        executeTimingAction();
     }
 });
 
-let popupMsg = "";
-let popupColor = "#333";
-let popupTimer = 0;
+// 메인 게임 루프
+function update() {
+    if (gameState === "PLAYING") {
+        // 자동 질주
+        player.x += player.speed;
+        distance = Math.floor(player.x / 10);
+        score = distance + (coins * 100);
 
-function showPopup(msg, color) {
-    popupMsg = msg;
-    popupColor = color;
-    popupTimer = 45; 
+        // 중력 적용
+        if (player.isWallSliding) {
+            player.vy = wallSlideGravity;
+        } else {
+            player.vy += gravity;
+        }
+        player.y += player.vy;
+
+        // 플랫폼(지붕) 충돌 체크
+        player.isWallSliding = false;
+
+        for (let p of platforms) {
+            if (player.x + player.width > p.x && player.x < p.x + p.width) {
+                if (player.y + player.height >= p.y && player.y + player.height - player.vy <= p.y + 10 && player.vy >= 0) {
+                    player.y = p.y - player.height;
+                    player.vy = 0;
+                    player.isJumping = false;
+                    player.jumpCount = 0;
+                }
+            }
+        }
+
+        // 벽(장애물 건물 벽면) 충돌 및 벽타기 체크
+        for (let h of hazards) {
+            if (player.y + player.height > h.y && player.y < h.y + h.height) {
+                if (player.x + player.width >= h.x && player.x < h.x + 10 && player.vy > 0) {
+                    player.isWallSliding = true;
+                    player.x = h.x - player.width;
+                }
+            }
+        }
+
+        // 코인 획득 체크
+        for (let item of items) {
+            if (!item.collected) {
+                let dist = Math.hypot((player.x + player.width/2) - item.x, (player.y + player.height/2) - item.y);
+                if (dist < 25) {
+                    item.collected = true;
+                    coins++;
+                }
+            }
+        }
+
+        // 낙사 체크 (낭떠러지 추락)
+        if (player.y > canvas.height + 50) {
+            gameState = "GAMEOVER";
+        }
+
+        // 월드 확장
+        generateWorld();
+        
+        // 속도 서서히 증가 (난이도 상승)
+        if (player.speed < 12) {
+            player.speed += 0.001;
+        }
+    }
 }
 
-function updateGame() {
-    if(!isPlaying) return;
+// 화면 렌더링
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if(gameStage === 1 || gameStage === 2 || gameStage === 4) {
-        gaugeX += gaugeDir + (combo * 0.2); // 콤보 높을수록 바늘 속도 가속!
-        if(gaugeX > 610 || gaugeX < 90) {
-            gaugeDir *= -1;
+    // 배경 달
+    ctx.fillStyle = "#fff3cd";
+    ctx.beginPath();
+    ctx.arc(700, 90, 40, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 카메라 스크롤 (플레이어 중심 추적)
+    ctx.save();
+    ctx.translate(-player.x + 200, 0);
+
+    // 플랫폼(지붕) 그리기
+    for (let p of platforms) {
+        ctx.fillStyle = "#3e2723";
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+        ctx.strokeStyle = "#5d4037";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(p.x, p.y, p.width, p.height);
+    }
+
+    // 장애물(벽) 그리기
+    for (let h of hazards) {
+        ctx.fillStyle = "#455a64";
+        ctx.fillRect(h.x, h.y, h.width, h.height);
+        ctx.strokeStyle = "#263238";
+        ctx.strokeRect(h.x, h.y, h.width, h.height);
+    }
+
+    // 코인 그리기
+    for (let item of items) {
+        if (!item.collected) {
+            ctx.fillStyle = "#ffeb3b";
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#fbc02d";
+            ctx.lineWidth = 3;
+            ctx.stroke();
         }
     }
 
-    // 화면 렌더링
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 배경 키친 테이블
-    ctx.fillStyle = "#fff8dc";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 손님 주문서 상단 표시
-    if(currentOrder) {
-        ctx.fillStyle = "#ffe4e1";
-        ctx.fillRect(150, 10, 400, 35);
-        ctx.strokeStyle = "#ffb6c1";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(150, 10, 400, 35);
-
-        ctx.fillStyle = "#d2143a";
-        ctx.font = "bold 16px 'Jua', sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(`💡 손님 주문: [ ${currentOrder.name} ] (요청 토핑: ${currentOrder.req})`, canvas.width / 2, 33);
-    }
-
-    // 조리대 프라이팬 및 팬케이크 시각화
-    ctx.beginPath();
-    ctx.arc(canvas.width / 2, 140, 85, 0, Math.PI * 2);
-    ctx.fillStyle = "#d3d3d3";
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "#a9a9a9";
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(canvas.width / 2, 140, 60, 0, Math.PI * 2);
-    if(gameStage === 1) ctx.fillStyle = "#fffacd"; // 반죽
-    else if(gameStage === 2) ctx.fillStyle = "#deb887"; // 익는중
-    else if(gameStage === 3) ctx.fillStyle = "#d2691e"; // 토핑 대기
-    else ctx.fillStyle = "#8b4513"; // 완성
-    ctx.fill();
-
-    // 단계별 가이드 텍스트
-    ctx.fillStyle = "#333";
-    ctx.font = "bold 18px 'Jua', sans-serif";
-    ctx.textAlign = "center";
-    let stageDesc = "";
-    if(gameStage === 1) stageDesc = "1단계: 반죽을 알맞은 크기로 짜주세요!";
-    else if(gameStage === 2) stageDesc = "2단계: 노릇하게 익었을 때 뒤집어주세요!";
-    else if(gameStage === 3) stageDesc = "3단계: 손님이 주문한 알맞은 토핑을 선택하세요!";
-    else if(gameStage === 4) stageDesc = "4단계: 마지막 시럽 타이밍을 맞추세요!";
+    // 플레이어 (고양이 닌자) 그리기
+    ctx.fillStyle = player.isWallSliding ? "#ff9800" : "#ff5722";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
     
-    ctx.fillText(stageDesc, canvas.width / 2, 235);
+    // 고양이 귀 표현
+    ctx.fillStyle = "#e64a19";
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    ctx.lineTo(player.x + 10, player.y - 12);
+    ctx.lineTo(player.x + 20, player.y);
+    ctx.fill();
 
-    // 타이밍 게이지 바 (토핑 단계 아닐 때만 표시)
-    if(gameStage !== 3) {
-        ctx.fillStyle = "#ddd";
-        ctx.beginPath();
-        ctx.roundRect(90, 265, 520, 22, 11);
-        ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(player.x + player.width - 20, player.y);
+    ctx.lineTo(player.x + player.width - 10, player.y - 12);
+    ctx.lineTo(player.x + player.width, player.y);
+    ctx.fill();
 
-        // 성공 존
-        ctx.fillStyle = "#98fb98";
-        ctx.fillRect(280, 265, 60, 22);
+    ctx.restore();
 
-        // 바늘
-        ctx.beginPath();
-        ctx.arc(gaugeX, 276, 12, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff1493";
-        ctx.fill();
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    // UI (점수 및 상태 표시 - 화면 고정)
+    ctx.fillStyle = "white";
+    ctx.font = "bold 20px Arial";
+    ctx.fillText("점수: " + score, 30, 40);
+    ctx.fillText("금화: 🪙 " + coins, 200, 40);
+
+    if (gameState === "START") {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "bold 36px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("🐱 고 군 분 투 🐱", canvas.width / 2, canvas.height / 2 - 30);
+        ctx.font = "18px Arial";
+        ctx.fillText("스페이스바를 눌러서 시작하세요!", canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText("점프 & 벽에 닿을 때 스페이스바 연타로 벽타기!", canvas.width / 2, canvas.height / 2 + 60);
+        ctx.textAlign = "left";
+    } else if (gameState === "GAMEOVER") {
+        ctx.fillStyle = "rgba(180, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "bold 36px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 30);
+        ctx.font = "18px Arial";
+        ctx.fillText("최종 점수: " + score + "점", canvas.width / 2, canvas.height / 2 + 15);
+        ctx.fillText("다시 시작하려면 스페이스바를 누르세요!", canvas.width / 2, canvas.height / 2 + 55);
+        ctx.textAlign = "left";
     }
-
-    // 팝업 메시지 출력
-    if(popupTimer > 0) {
-        ctx.fillStyle = popupColor;
-        ctx.font = "bold 20px 'Jua', sans-serif";
-        ctx.fillText(popupMsg, canvas.width / 2, 95);
-        popupTimer--;
-    }
-
-    animId = requestAnimationFrame(updateGame);
 }
 
-function endGame() {
-    isPlaying = false;
-    if(animId) cancelAnimationFrame(animId);
-    clearInterval(timerInterval);
-    document.getElementById('finalScore').innerText = `최종 점수: ${score}점 달성! 🏆`;
-    document.getElementById('gameOverScreen').style.display = 'flex';
+// 메인 루프 실행
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
 }
 
-// 최초 시작
-startGame();
+initGame();
+loop();
 </script>
 
 </body>
 </html>
 """
 
-components.html(game_html, height=540, scrolling=False)
+st.components.v1.html(game_code, height=480, scrolling=False)
