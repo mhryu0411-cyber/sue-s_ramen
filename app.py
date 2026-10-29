@@ -94,7 +94,10 @@ with st.sidebar:
     st.divider()
     
     st.subheader("➕ 서울 라면집 제보하기")
-    with st.add_form := st.form("add_form", clear_on_submit=True):
+    
+    # 폼 선언 (문법 에러 수정 완료)
+    add_form = st.form("add_form", clear_on_submit=True)
+    with add_form:
         new_name = st.text_input("가게 이름")
         new_address = st.text_input("서울 주소 (예: 서울시 중구 ...)")
         
@@ -152,7 +155,7 @@ with map_col:
         tiles="CartoDB positron"
     )
 
-    # 마커 루프 (거지맵처럼 가격이 보이도록 툴팁 및 팝업 구성)
+    # 마커 루프
     for _, row in filtered_df.iterrows():
         popup_html = f"""
         <div style="font-family:sans-serif; width:180px;">
