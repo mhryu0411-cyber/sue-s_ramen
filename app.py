@@ -1,26 +1,26 @@
 import streamlit as st
 
-# Streamlit 페이지 설정 (와이드 레이아웃 적용)
+# Streamlit 페이지 설정 (와이드 레이아웃)
 st.set_page_config(
-    page_title="고군분투 리메이크 - 하이퍼 스피드 에디션",
+    page_title="고군분투 리메이크 - 익스트림 부스터 에디션",
     page_icon="🐱",
     layout="wide"
 )
 
-st.title("🐱 고군분투: 하이퍼 질주! (Go Go! Pyun-chan!)")
-st.markdown("⚡ **속도 대폭 상향 & 와이드 뷰 적용!** 스페이스바를 눌러 점프하고, 벽에 부딪힐 때 **연타**하여 벽을 타고 오르세요. 생선(🐟)을 먹으면 **부스터 모드**가 발동됩니다!")
+st.title("🐱 고군분투: 익스트림 하이퍼 질주! (Extreme Go Go!)")
+st.markdown("🚀 **벽 삭제 & 낭떠러지 간격 대폭 확장!** 스페이스바를 연타해 아슬아슬하게 지붕 사이를 뛰어넘으세요. **생선(🐟)을 먹으면 화면이 흔들리며 미친듯한 슈퍼 부스터**가 발동됩니다!")
 
-# HTML5 + Canvas + JS 고성능 아케이드 게임 컴포넌트
+# HTML5 + Canvas + JS 익스트림 아케이드 엔진
 game_code = """
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>고군분투 하이퍼</title>
+    <title>고군분투 익스트림</title>
     <style>
         body {
             margin: 0;
-            background-color: #0f0f13;
+            background-color: #0b0b0f;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -29,9 +29,9 @@ game_code = """
             font-family: 'Arial', sans-serif;
         }
         canvas {
-            border: 4px solid #ffcc00;
-            box-shadow: 0 0 30px rgba(255, 204, 0, 0.4);
-            background: linear-gradient(to bottom, #111, #1a2a3a, #2c3e50);
+            border: 4px solid #00ffff;
+            box-shadow: 0 0 35px rgba(0, 255, 255, 0.4);
+            background: linear-gradient(to bottom, #050508, #101820, #1a2634);
         }
     </style>
 </head>
@@ -49,33 +49,28 @@ let score = 0;
 let distance = 0;
 let coins = 0;
 let fishCount = 0;
-let combo = 0;
 let shakeTimer = 0;
 let boosterTimer = 0;
 
-// 플레이어 객체 (초고속 닌자 고양이)
+// 플레이어 객체 (익스트림 닌자 고양이)
 let player = {
     x: 150,
     y: 350,
-    width: 40,
-    height: 50,
+    width: 38,
+    height: 48,
     vy: 0,
-    baseSpeed: 9,      // 기본 속도 대폭 상향
-    speed: 9,
+    baseSpeed: 10,      // 기본 속도감 상향
+    speed: 10,
     isJumping: false,
-    isWallSliding: false,
-    jumpCount: 0,
-    rotation: 0
+    jumpCount: 0
 };
 
-// 물리 상수 (하드코어 아케이드 세팅)
-const gravity = 0.75;
-const jumpPower = -14.5;
-const wallSlideGravity = 1.8;
+// 물리 상수 (와이드 갭에 최적화된 호쾌한 점프)
+const gravity = 0.68;
+const jumpPower = -13.8;
 
-// 월드 오브젝트
+// 월드 오브젝트 (지붕 및 아이템)
 let platforms = [];
-let hazards = [];
 let items = [];
 let particles = [];
 
@@ -90,81 +85,67 @@ function initGame() {
     distance = 0;
     coins = 0;
     fishCount = 0;
-    combo = 0;
     boosterTimer = 0;
     player.x = 150;
     player.y = 300;
     player.vy = 0;
     player.isJumping = false;
-    player.isWallSliding = false;
     player.jumpCount = 0;
     player.speed = player.baseSpeed;
     
+    // 시작 지붕
     platforms = [
-        { x: 0, y: 420, width: 1200, height: 100, type: 'roof' }
+        { x: 0, y: 420, width: 1400, height: 100 }
     ];
-    hazards = [];
     items = [];
     particles = [];
 }
 
-// 무한 확장 맵 생성기 (더 다채롭고 넓은 간격)
+// 무한 확장 맵 생성기 (벽 제거, 넓고 짜릿한 간격 적용)
 function generateWorld() {
     let lastPlatform = platforms[platforms.length - 1];
-    if (lastPlatform.x + lastPlatform.width < player.x + 1200) {
-        let pWidth = Math.floor(Math.random() * 300) + 200;
-        let pGap = Math.floor(Math.random() * 130) + 70; // 아슬아슬한 낭떠러지 간격
-        let pHeight = Math.floor(Math.random() * 80) + 360;
+    if (lastPlatform.x + lastPlatform.width < player.x + 1400) {
+        let pWidth = Math.floor(Math.random() * 320) + 220; // 지붕 너비
+        let pGap = Math.floor(Math.random() * 160) + 110;   // 넓어진 낭떠러지 간격!
+        let pHeight = Math.floor(Math.random() * 90) + 350;  // 높낮이 변화
         
         let newX = lastPlatform.x + lastPlatform.width + pGap;
-        platforms.push({ x: newX, y: pHeight, width: pWidth, height: 160, type: 'roof' });
+        platforms.push({ x: newX, y: pHeight, width: pWidth, height: 160 });
 
-        // 장애물(벽) 배치 확률 증가 및 높이 변화
-        if (Math.random() > 0.3) {
-            let hHeight = Math.floor(Math.random() * 60) + 100;
-            hazards.push({
-                x: newX + pWidth - 50,
-                y: pHeight - hHeight,
-                width: 45,
-                height: hHeight,
-                type: 'wall'
-            });
-        }
-
-        // 아이템(금화 및 부스터 생선) 배치
-        if (Math.random() > 0.2) {
+        // 아이템(금화 또는 극적 부스터 생선) 배치
+        if (Math.random() > 0.15) {
+            let isFish = Math.random() > 0.75; // 25% 확률로 생선 등장
             items.push({
-                x: newX + 80,
-                y: pHeight - 70,
-                radius: 12,
-                type: Math.random() > 0.8 ? 'fish' : 'coin',
+                x: newX + pWidth / 2,
+                y: pHeight - 75,
+                radius: isFish ? 14 : 11,
+                type: isFish ? 'fish' : 'coin',
                 collected: false
             });
         }
     }
 
-    // 화면 지난 오브젝트 메모리 관리
+    // 화면 지난 오브젝트 메모리 정리
     platforms = platforms.filter(p => p.x + p.width > player.x - 300);
-    hazards = hazards.filter(h => h.x + h.width > player.x - 300);
     items = items.filter(i => i.x > player.x - 300);
 }
 
-// 이펙트 파티클 생성
-function createParticles(x, y, color) {
-    for (let i = 0; i < 8; i++) {
+// 파티클 생성기
+function createParticles(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
         particles.push({
             x: x,
             y: y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
-            radius: Math.random() * 4 + 2,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            radius: Math.random() * 5 + 2,
             color: color,
             alpha: 1.0
         });
     }
 }
 
-// 키 입력 핸들러 (스페이스바 점프 및 연타 벽타기)
+// 키 입력 핸들러 (스페이스바 점프 / 2단 점프)
 window.addEventListener("keydown", e => {
     if (e.code === "Space") {
         e.preventDefault();
@@ -175,20 +156,12 @@ window.addEventListener("keydown", e => {
         }
         
         if (gameState === "PLAYING") {
-            if (player.isWallSliding) {
-                // 벽 부수고 튀어오르기 (벽킥 콤보)
-                player.vy = jumpPower * 1.15;
-                player.speed += 0.8; // 가속 붙음
-                player.isWallSliding = false;
-                combo++;
-                triggerShake(8);
-                createParticles(player.x, player.y, "#ffcc00");
-            } else if (!player.isJumping || player.jumpCount < 2) {
-                // 2단 점프
+            if (!player.isJumping || player.jumpCount < 2) {
                 player.vy = jumpPower;
                 player.isJumping = true;
                 player.jumpCount++;
-                createParticles(player.x, player.y + player.height, "#ffffff");
+                triggerShake(4);
+                createParticles(player.x + player.width/2, player.y + player.height, "#00ffff", 6);
             }
         }
     }
@@ -197,48 +170,38 @@ window.addEventListener("keydown", e => {
 // 게임 루프 업데이트
 function update() {
     if (gameState === "PLAYING") {
-        // 부스터 모드 체크
+        // 슈퍼 부스터 모드 계산
         if (boosterTimer > 0) {
             boosterTimer--;
-            player.speed = 16; // 슈퍼 하이퍼 스피드
+            player.speed = 18; // 광속 하이퍼 스피드!
+            if (Math.random() > 0.4) {
+                createParticles(player.x, player.y + player.height/2, "#ff00ff", 2);
+            }
         } else {
-            // 시간이 지날수록 기본 속도가 서서히 빨라짐 (최고속도 13.5 제한)
-            if (player.speed < 13.5) {
-                player.speed += 0.002;
+            // 시간이 지날수록 점진적 가속 (최고 기본속도 14 제한)
+            if (player.speed < 14) {
+                player.speed += 0.0025;
             }
         }
 
         player.x += player.speed;
         distance = Math.floor(player.x / 8);
-        score = distance + (coins * 150) + (fishCount * 500) + (combo * 50);
+        score = distance + (coins * 200) + (fishCount * 1000);
 
         // 중력 적용
-        if (player.isWallSliding) {
-            player.vy = wallSlideGravity;
-        } else {
-            player.vy += gravity;
-        }
+        player.vy += gravity;
         player.y += player.vy;
 
-        // 지붕 충돌 체크
-        player.isWallSliding = false;
+        // 지붕(땅바닥) 충돌 판정
+        let landed = false;
         for (let p of platforms) {
             if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                if (player.y + player.height >= p.y && player.y + player.height - player.vy <= p.y + 12 && player.vy >= 0) {
+                if (player.y + player.height >= p.y && player.y + player.height - player.vy <= p.y + 14 && player.vy >= 0) {
                     player.y = p.y - player.height;
                     player.vy = 0;
                     player.isJumping = false;
                     player.jumpCount = 0;
-                }
-            }
-        }
-
-        // 장애물(벽) 충돌 및 벽타기 감지
-        for (let h of hazards) {
-            if (player.y + player.height > h.y && player.y < h.y + h.height) {
-                if (player.x + player.width >= h.x && player.x < h.x + 15 && player.vy > 0) {
-                    player.isWallSliding = true;
-                    player.x = h.x - player.width;
+                    landed = true;
                 }
             }
         }
@@ -247,32 +210,32 @@ function update() {
         for (let item of items) {
             if (!item.collected) {
                 let dist = Math.hypot((player.x + player.width/2) - item.x, (player.y + player.height/2) - item.y);
-                if (dist < 30) {
+                if (dist < 32) {
                     item.collected = true;
                     if (item.type === 'coin') {
                         coins++;
-                        createParticles(item.x, item.y, "#ffd700");
+                        createParticles(item.x, item.y, "#ffd700", 8);
                     } else if (item.type === 'fish') {
                         fishCount++;
-                        boosterTimer = 180; // 약 3초간 슈퍼 부스터
-                        triggerShake(15);
-                        createParticles(item.x, item.y, "#00ffcc");
+                        boosterTimer = 220; // 약 3.5초간 극적인 슈퍼 부스터!
+                        triggerShake(25);   // 화면이 쿵 하고 흔들림
+                        createParticles(item.x, item.y, "#ff00ff", 25);
                     }
                 }
             }
         }
 
-        // 낙사 체크
+        // 낙사 판정 (낭떠러지 추락)
         if (player.y > canvas.height + 60) {
             gameState = "GAMEOVER";
-            triggerShake(25);
+            triggerShake(30);
         }
 
         // 파티클 업데이트
         for (let p of particles) {
             p.x += p.vx;
             p.y += p.vy;
-            p.alpha -= 0.03;
+            p.alpha -= 0.035;
         }
         particles = particles.filter(p => p.alpha > 0);
 
@@ -284,58 +247,43 @@ function update() {
 function draw() {
     ctx.save();
     
-    // 화면 흔들림(Shake) 적용
+    // 화면 흔들림(Shake) 연출
     if (shakeTimer > 0) {
         shakeTimer--;
-        let offsetX = (Math.random() - 0.5) * 10;
-        let offsetY = (Math.random() - 0.5) * 10;
+        let offsetX = (Math.random() - 0.5) * 14;
+        let offsetY = (Math.random() - 0.5) * 14;
         ctx.translate(offsetX, offsetY);
     }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 배경 아파트/기와의 실루엣 레이어
-    ctx.fillStyle = "#1b2631";
+    // 배경 실루엣
+    ctx.fillStyle = boosterTimer > 0 ? "#1a0033" : "#0d1b2a";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 배경 달
-    ctx.fillStyle = boosterTimer > 0 ? "#ff00ff" : "#f1c40f";
+    // 배경 달 (부스터 시 네온 퍼플로 변함)
+    ctx.fillStyle = boosterTimer > 0 ? "#ff00ff" : "#00ffff";
     ctx.beginPath();
-    ctx.arc(850, 100, 50, 0, Math.PI * 2);
+    ctx.arc(850, 90, 45, 0, Math.PI * 2);
     ctx.fill();
 
-    // 카메라 추적 변환
+    // 카메라 스크롤 변환
     ctx.save();
     ctx.translate(-player.x + 250, 0);
 
-    // 플랫폼(기와 지붕) 렌더링
+    // 지붕 렌더링
     for (let p of platforms) {
-        ctx.fillStyle = "#2c3e50";
+        ctx.fillStyle = "#1b2631";
         ctx.fillRect(p.x, p.y, p.width, p.height);
-        // 기와 문양 상단 라인
-        ctx.fillStyle = "#e74c3c";
-        ctx.fillRect(p.x, p.y, p.width, 8);
-        ctx.strokeStyle = "#34495e";
+        // 기와 상단 네온 라인
+        ctx.fillStyle = boosterTimer > 0 ? "#ff00ff" : "#00ffff";
+        ctx.fillRect(p.x, p.y, p.width, 6);
+        ctx.strokeStyle = "#415a77";
         ctx.lineWidth = 3;
         ctx.strokeRect(p.x, p.y, p.width, p.height);
     }
 
-    // 장애물 벽 렌더링
-    for (let h of hazards) {
-        ctx.fillStyle = "#34495e";
-        ctx.fillRect(h.x, h.y, h.width, h.height);
-        ctx.strokeStyle = "#111";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(h.x, h.y, h.width, h.height);
-        // 벽 벽돌 무늬 선
-        ctx.strokeStyle = "#2c3e50";
-        ctx.beginPath();
-        ctx.moveTo(h.x, h.y + 20); ctx.lineTo(h.x + h.width, h.y + 20);
-        ctx.moveTo(h.x, h.y + 50); ctx.lineTo(h.x + h.width, h.y + 50);
-        ctx.stroke();
-    }
-
-    // 아이템 렌더링 (금화 & 생선 부스터)
+    // 아이템 렌더링
     for (let item of items) {
         if (!item.collected) {
             ctx.beginPath();
@@ -343,16 +291,16 @@ function draw() {
                 ctx.fillStyle = "#f1c40f";
                 ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = "#d4ac0d";
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            } else {
-                // 생선 아이템 (부스터)
-                ctx.fillStyle = "#00ffff";
-                ctx.ellipse(item.x, item.y, 16, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
                 ctx.strokeStyle = "#fff";
                 ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                // 생선 부스터 아이템 (반짝이는 네온 효과)
+                ctx.fillStyle = "#ff00ff";
+                ctx.ellipse(item.x, item.y, 18, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#00ffff";
+                ctx.lineWidth = 3;
                 ctx.stroke();
             }
         }
@@ -369,44 +317,47 @@ function draw() {
     ctx.globalAlpha = 1.0;
 
     // 플레이어 렌더링 (고양이 닌자)
-    let playerColor = boosterTimer > 0 ? "#00ffff" : (player.isWallSliding ? "#e67e22" : "#ff5722");
+    let playerColor = boosterTimer > 0 ? "#ff00ff" : "#ff5722";
     ctx.fillStyle = playerColor;
     ctx.fillRect(player.x, player.y, player.width, player.height);
     
-    // 귀 장식
-    ctx.fillStyle = "#d35400";
+    // 귀 디자인
+    ctx.fillStyle = boosterTimer > 0 ? "#00ffff" : "#d35400";
     ctx.beginPath();
     ctx.moveTo(player.x, player.y);
-    ctx.lineTo(player.x + 12, player.y - 15);
-    ctx.lineTo(player.x + 24, player.y);
+    ctx.lineTo(player.x + 10, player.y - 14);
+    ctx.lineTo(player.x + 20, player.y);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(player.x + player.width - 24, player.y);
-    ctx.lineTo(player.x + player.width - 12, player.y - 15);
+    ctx.moveTo(player.x + player.width - 20, player.y);
+    ctx.lineTo(player.x + player.width - 10, player.y - 14);
     ctx.lineTo(player.x + player.width, player.y);
     ctx.fill();
 
     ctx.restore();
 
-    // HUD UI 오버레이 (점수, 코인, 부스터 게이지)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.fillRect(20, 20, 360, 75);
-    ctx.strokeStyle = "#ffcc00";
+    // HUD UI 오버레이
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.fillRect(20, 20, 380, 75);
+    ctx.strokeStyle = boosterTimer > 0 ? "#ff00ff" : "#00ffff";
     ctx.lineWidth = 2;
-    ctx.strokeRect(20, 20, 360, 75);
+    ctx.strokeRect(20, 20, 380, 75);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 20px Arial";
     ctx.fillText("점수: " + score, 35, 50);
-    ctx.fillText("🪙 코인: " + coins, 200, 50);
-    ctx.fillText("🐟 생선: " + fishCount, 300, 50);
-    ctx.fillText("🔥 콤보: " + combo, 35, 80);
+    ctx.fillText("🪙 코인: " + coins, 190, 50);
+    ctx.fillText("🐟 생선: " + fishCount, 295, 50);
 
     if (boosterTimer > 0) {
-        ctx.fillStyle = "#00ffff";
+        ctx.fillStyle = "#ff00ff";
         ctx.font = "bold 22px Arial";
-        ctx.fillText("⚡ SUPER BOOSTER!", 200, 80);
+        ctx.fillText("⚡ EXTREME SUPER BOOSTER!!", 35, 80);
+    } else {
+        ctx.fillStyle = "#00ffff";
+        ctx.font = "16px Arial";
+        ctx.fillText("팁: 생선(🐟)을 먹으면 광속 질주!", 35, 80);
     }
 
     // 상태 메시지 (시작 / 게임오버)
@@ -414,17 +365,17 @@ function draw() {
         ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.fillStyle = "#ffcc00";
-        ctx.font = "bold 44px Arial";
+        ctx.fillStyle = "#00ffff";
+        ctx.font = "bold 40px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("🐱 고 군 분 투 : 하 이 퍼 ⚡", canvas.width / 2, canvas.height / 2 - 40);
+        ctx.fillText("🐱 고 군 분 투 : 익 스 트 림 ⚡", canvas.width / 2, canvas.height / 2 - 40);
         ctx.fillStyle = "#ffffff";
-        ctx.font = "20px Arial";
-        ctx.fillText("스페이스바를 눌러 초고속 질주를 시작하세요!", canvas.width / 2, canvas.height / 2 + 15);
-        ctx.fillText("점프 & 벽에 닿을 때 스페이스바 연타로 벽타기 콤보!", canvas.width / 2, canvas.height / 2 + 55);
+        ctx.font = "19px Arial";
+        ctx.fillText("스페이스바를 눌러 넓은 낭떠러지 질주를 시작하세요!", canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText("스페이스바 연타로 아슬아슬한 2단 점프 활용!", canvas.width / 2, canvas.height / 2 + 50);
         ctx.textAlign = "left";
     } else if (gameState === "GAMEOVER") {
-        ctx.fillStyle = "rgba(180, 0, 0, 0.85)";
+        ctx.fillStyle = "rgba(150, 0, 0, 0.85)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = "#ffffff";
@@ -440,7 +391,7 @@ function draw() {
     ctx.restore();
 }
 
-// 메인 아케이드 루프
+// 메인 루프 실행
 function loop() {
     update();
     draw();
