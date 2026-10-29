@@ -148,11 +148,11 @@ with map_col:
         center_lat = filtered_df['lat'].mean()
         center_lon = filtered_df['lon'].mean()
 
-    # 깔끔한 톤의 Folium 지도 생성 (CartoDB Positron 적용)
+    # 💡 API 키 문제 해결을 위해 OpenStreetMap 타일 사용
     m = folium.Map(
         location=[center_lat, center_lon], 
         zoom_start=13, 
-        tiles="CartoDB positron"
+        tiles="OpenStreetMap"
     )
 
     # 마커 루프
