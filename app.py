@@ -97,10 +97,10 @@ game_html = """
         <span id="lives">실패: 0/3</span>
     </div>
 
-    <canvas id="gameCanvas" width="660" height="380"></canvas>
+    <canvas id="gameCanvas" width="660" height="380" onclick="handleAction()"></canvas>
 
     <div class="controls">
-        <button id="actionBtn" class="action-btn" onclick="handleAction()">🥞 반죽 붓기 / 타이밍 맞추기!</button>
+        <button id="actionBtn" class="action-btn" onclick="handleAction()">🥞 타이밍 맞춰 누르기! (또는 스페이스바)</button>
     </div>
 
     <div id="gameOverScreen" class="game-over">
@@ -120,17 +120,16 @@ let timeLeft = 45;
 let lives = 0;
 let isPlaying = false;
 let timerInterval = null;
+let animId = null;
 
-// 게임 단계: 1(반죽 타이밍), 2(뒤집기 타이밍), 3(시럽 뿌리기 타이밍)
 let gameStep = 1; 
-let gaugeX = 0;
-let gaugeDir = 5;
-let instructionText = "반죽 게이지가 중앙(초록색)에 왔을 때 버튼을 누르세요!";
+let gaugeX = 100;
+let gaugeDir = 3.5; // 속도를 고정하고 안정적으로 설정
 
 const stepsInfo = {
-    1: { name: "1단계: 반죽 붓기", targetMin: 260, targetMax: 300, desc: "노란 원 중앙에 맞추세요!" },
-    2: { name: "2단계: 뒤집기 타이밍", targetMin: 240, targetMax: 320, desc: "노릇하게 익었을 때 뒤집기!" },
-    3: { name: "3단계: 메이플 시럽 뿌리기", targetMin: 270, targetMax: 290, desc: "완벽한 순간에 시럽 투척!" }
+    1: { name: "1단계: 반죽 붓기", targetMin: 270, targetMax: 330, desc: "초록색 영역에 바늘이 왔을 때 누르세요!" },
+    2: { name: "2단계: 뒤집기 타이밍", targetMin: 250, targetMax: 350, desc: "노릇하게 익었을 때 누르세요!" },
+    3: { name: "3단계: 메이플 시럽 뿌리기", targetMin: 280, targetMax: 320, desc: "완벽한 순간에 시럽 투척!" }
 };
 
 function startGame() {
@@ -140,7 +139,8 @@ function startGame() {
     lives = 0;
     isPlaying = true;
     gameStep = 1;
-    gaugeX = 50;
+    gaugeX = 100;
+    gaugeDir = 3.5;
     
     document.getElementById('gameOverScreen').style.display = 'none';
     updateUI();
@@ -154,7 +154,8 @@ function startGame() {
         }
     }, 1000);
 
-    requestAnimationFrame(updateGame);
+    if(animId) cancelAnimationFrame(animId);
+    updateGame();
 }
 
 function updateUI() {
@@ -169,7 +170,7 @@ function handleAction() {
 
     let currentStepInfo = stepsInfo[gameStep];
     let isPerfect = gaugeX >= currentStepInfo.targetMin && gaugeX <= currentStepInfo.targetMax;
-    let isGood = gaugeX >= currentStepInfo.targetMin - 40 && gaugeX <= currentStepInfo.targetMax + 40;
+    let isGood = gaugeX >= currentStepInfo.targetMin - 45 && gaugeX <= currentStepInfo.targetMax + 45;
 
     if(isPerfect) {
         score += 150 + (combo * 20);
@@ -194,6 +195,14 @@ function handleAction() {
     updateUI();
 }
 
+// 스페이스바 조작 지원
+window.addEventListener('keydown', (e) => {
+    if(e.code === 'Space') {
+        e.preventDefault();
+        handleAction();
+    }
+});
+
 let popupMsg = "";
 let popupColor = "#333";
 let popupTimer = 0;
@@ -201,13 +210,13 @@ let popupTimer = 0;
 function showPopup(msg, color) {
     popupMsg = msg;
     popupColor = color;
-    popupTimer = 30; // 30프레임 동안 표시
+    popupTimer = 40; 
 }
 
 function nextStep() {
     gameStep++;
     if(gameStep > 3) {
-        gameStep = 1; // 한 세트 완성! 추가 보너스 점수
+        gameStep = 1; 
         score += 300;
         showPopup("🎉 특대형 무지개 팬케이크 완성! (+300점)", "#9370db");
     }
@@ -216,20 +225,20 @@ function nextStep() {
 function updateGame() {
     if(!isPlaying) return;
 
-    // 게이지바 왕복 이동 (난이도 조절 가능)
-    gaugeX += gaugeDir * (1 + (combo * 0.15)); // 콤보가 쌓일수록 점점 빨라져서 긴장감 극대화!
-    if(gaugeX > 580 || gaugeX < 80) {
-        gaugeDir *= -1;
+    // 일정한 속도로 왕복하도록 수정 (폭주 방지)
+    gaugeX += gaugeDir;
+    if(gaugeX > 570 || gaugeX < 90) {
+        gaugeDir *= -1; // 방향 전환
     }
 
     // 렌더링
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 배경 조리대 연출
+    // 배경 조리대
     ctx.fillStyle = "#fff8dc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 팬케이크 프라이팬 그림
+    // 팬케이크 프라이팬
     ctx.beginPath();
     ctx.arc(canvas.width / 2, 160, 90, 0, Math.PI * 2);
     ctx.fillStyle = "#d3d3d3";
@@ -238,15 +247,15 @@ function updateGame() {
     ctx.strokeStyle = "#a9a9a9";
     ctx.stroke();
 
-    // 팬케이크 단계별 시각 효과
+    // 팬케이크 시각 효과
     ctx.beginPath();
     ctx.arc(canvas.width / 2, 160, 65, 0, Math.PI * 2);
-    if(gameStep === 1) ctx.fillStyle = "#fffacd"; // 반죽 색
-    else if(gameStep === 2) ctx.fillStyle = `#deb887`; // 익어가는 색
-    else ctx.fillStyle = "#d2691e"; // 완성 직전 색
+    if(gameStep === 1) ctx.fillStyle = "#fffacd"; 
+    else if(gameStep === 2) ctx.fillStyle = `#deb887`; 
+    else ctx.fillStyle = "#d2691e"; 
     ctx.fill();
 
-    // 현재 단계 안내 텍스트
+    // 단계 안내 텍스트
     ctx.fillStyle = "#333";
     ctx.font = "bold 20px 'Jua', sans-serif";
     ctx.textAlign = "center";
@@ -258,6 +267,7 @@ function updateGame() {
 
     // 타이밍 게이지 바 배경
     ctx.fillStyle = "#ddd";
+    ctx.beginPath();
     ctx.roundRect(80, 290, 500, 25, 12);
     ctx.fill();
 
@@ -275,7 +285,7 @@ function updateGame() {
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // 피드백 팝업 텍스트 출력
+    // 피드백 팝업 텍스트
     if(popupTimer > 0) {
         ctx.fillStyle = popupColor;
         ctx.font = "bold 22px 'Jua', sans-serif";
@@ -283,7 +293,15 @@ function updateGame() {
         popupTimer--;
     }
 
-    requestAnimationFrame(updateGame);
+    animId = requestAnimationFrame(updateGame);
+}
+
+function endGame() {
+    isPlaying = false;
+    if(animId) cancelAnimationFrame(animId);
+    clearInterval(timerInterval);
+    document.getElementById('finalScore').innerText = `최종 점수: ${score}점 달성! 🏆`;
+    document.getElementById('gameOverScreen').style.display = 'flex';
 }
 
 // 최초 시작
