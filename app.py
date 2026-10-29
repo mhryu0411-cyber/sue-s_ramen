@@ -1,197 +1,325 @@
-import json
-import os
-import pandas as pd
 import streamlit as st
-import folium
-from streamlit_folium import st_folium
+import streamlit.components.v1 as components
 
-# 1. 페이지 설정 (와이드 모드)
 st.set_page_config(
-    page_title="서울 라면맵 - 참여형 맛집 지도",
-    page_icon="🍜",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="슈의 알록달록 무지개 파스타 가게",
+    page_icon="🍝",
+    layout="centered"
 )
 
-# 2. 라면 감성을 담은 따뜻하고 세련된 커스텀 CSS 디자인
 st.markdown("""
     <style>
-    .main { background-color: #FFF8F3; }
-    .stButton>button { width: 100%; border-radius: 8px; background-color: #FF4500; color: white; font-weight: bold; border: none; padding: 10px; }
-    .stButton>button:hover { background-color: #E03E00; color: white; }
-    div.stMetric { background-color: #FFFFFF; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    h1, h2, h3 { color: #1A202C; font-family: 'Apple SD Gothic Neo', sans-serif; }
+    .title { text-align: center; color: #ff4b4b; font-family: 'Jua', sans-serif; }
+    .subtitle { text-align: center; color: #666; font-size: 16px; margin-bottom: 20px; }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# 데이터 파일 경로
-DATA_FILE = "seoul_ramen_places.json"
+st.markdown("<h1 class='title'>🍝 슈의 알록달록 무지개 파스타 가게</h1>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>제한 시간 내에 손님이 원하는 레시피대로 파스타를 완성해서 서빙하세요!</div>", unsafe_allow_html=True)
 
-# 초기 데이터 로드 (서울 중심 대표 라면 가게)
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    else:
-        initial_data = [
-            {
-                "name": "공릉동 멸치국수 본점",
-                "address": "서울특별시 노원구 화랑로 415",
-                "lat": 37.6251,
-                "lon": 127.0728,
-                "price": 5000,
-                "rating": 4.6,
-                "comment": "시원한 멸치 육수가 일품인 가성비 최고 국수/라면집!"
-            },
-            {
-                "name": "틈새라면 명동본점",
-                "address": "서울특별시 중구 명동10길 19-3",
-                "lat": 37.5610,
-                "lon": 126.9850,
-                "price": 6000,
-                "rating": 4.7,
-                "comment": "원조 매운 라면의 성지. 빨계떡 강력 추천합니다."
-            },
-            {
-                "name": "라멘모토 서울역점",
-                "address": "서울특별시 중구 세종대로 14",
-                "lat": 37.5563,
-                "lon": 126.9723,
-                "price": 9500,
-                "rating": 4.4,
-                "comment": "진한 츠케멘과 매운 라멘을 맛볼 수 있는 곳."
-            },
-            {
-                "name": "우정가든 라면",
-                "address": "서울특별시 종로구 율곡로 3",
-                "lat": 37.5758,
-                "lon": 126.9814,
-                "price": 4500,
-                "rating": 4.2,
-                "comment": "경복궁 근처 옛날 감성 분식집 라면."
+# HTML5 Canvas 기반의 슈 게임 감성 코어 엔진
+game_html = """
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Shoo's Pasta Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff0f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Maplestory', 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            width: 700px;
+            height: 500px;
+            background: #fffaed;
+            border: 5px solid #ffb6c1;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(255, 182, 193, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: #fff;
+            cursor: pointer;
+        }
+        .ui-layer {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+            pointer-events: none;
+        }
+        .game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            display: none;
+        }
+        .btn {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: 0.2s;
+        }
+        .btn:hover { background: #ff1493; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="ui-layer">
+        <span id="score-board">점수: 0점</span>
+        <span id="time-board">남은 시간: 60초</span>
+        <span id="life-board">실패: 0/3</span>
+    </div>
+    
+    <canvas id="canvas" width="700" height="500"></canvas>
+
+    <div id="game-over" class="game-over-screen">
+        <h2 id="final-msg" style="font-size: 32px; color: #ffeb3b; margin-bottom: 10px;">게임 종료!</h2>
+        <p id="final-score" style="font-size: 20px; margin-bottom: 20px;"></p>
+        <button class="btn" onclick="restartGame()">다시 하기 ✨</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// 게임 상태 변수
+let score = 0;
+let timeLeft = 60;
+let lives = 0;
+let isPlaying = false;
+let gameTimer = null;
+let currentOrder = null;
+let userIngredients = [];
+
+// 레시피 및 재료 정의
+const ingredientTypes = [
+    { id: 'noodle_yellow', name: '일반 면', color: '#ffd700', x: 80, y: 380, radius: 35 },
+    { id: 'noodle_green', name: '시금치 면', color: '#8fbc8f', x: 180, y: 380, radius: 35 },
+    { id: 'sauce_tomato', name: '토마토 소스', color: '#ff4500', x: 280, y: 380, radius: 35 },
+    { id: 'sauce_cream', name: '크림 소스', color: '#fffff0', x: 380, y: 380, radius: 35 },
+    { id: 'topping_shrimp', name: '새우', color: '#ffa07a', x: 480, y: 380, radius: 35 },
+    { id: 'topping_cheese', name: '치즈', color: '#ffffe0', x: 580, y: 380, radius: 35 }
+];
+
+const recipes = [
+    { name: '새우 토마토 파스타', items: ['noodle_yellow', 'sauce_tomato', 'topping_shrimp'] },
+    { name: '치즈 크림 파스타', items: ['noodle_yellow', 'sauce_cream', 'topping_cheese'] },
+    { name: '초록 시금치 로제 파스타', items: ['noodle_green', 'sauce_tomato', 'topping_cheese'] },
+    { name: '특제 해물 크림 파스타', items: ['noodle_green', 'sauce_cream', 'topping_shrimp'] }
+];
+
+// 냄비 위치
+const pot = { x: 350, y: 220, radius: 75 };
+// 완성 접시 버튼 위치
+const serveButton = { x: 350, y: 460, width: 140, height: 32 };
+
+function startGame() {
+    score = 0;
+    timeLeft = 60;
+    lives = 0;
+    userIngredients = [];
+    isPlaying = true;
+    document.getElementById('game-over').style.display = 'none';
+    generateNewOrder();
+    
+    if(gameTimer) clearInterval(gameTimer);
+    gameTimer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time-board').innerText = `남은 시간: ${timeLeft}초`;
+        if(timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
+}
+
+function generateNewOrder() {
+    const randomIndex = Math.floor(Math.random() * recipes.length);
+    currentOrder = recipes[randomIndex];
+    userIngredients = [];
+}
+
+function endGame() {
+    isPlaying = false;
+    clearInterval(gameTimer);
+    document.getElementById('final-score').innerText = `최종 점수: ${score}점 달성!`;
+    document.getElementById('game-over').style.display = 'flex';
+}
+
+function restartGame() {
+    startGame();
+}
+
+// 마우스 클릭 이벤트 (재료 투입 및 서빙)
+canvas.addEventListener('click', (e) => {
+    if(!isPlaying) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // 1. 재료 클릭 확인
+    ingredientTypes.forEach(ing => {
+        const dist = Math.hypot(mouseX - ing.x, mouseY - ing.y);
+        if(dist < ing.radius) {
+            if(userIngredients.length < 3) {
+                userIngredients.push(ing.id);
             }
-        ]
-        save_data(initial_data)
-        return initial_data
+        }
+    });
 
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    // 2. 완성 서빙 버튼 클릭 확인
+    if(mouseX >= serveButton.x - 70 && mouseX <= serveButton.x + 70 &&
+       mouseY >= serveButton.y - 16 && mouseY <= serveButton.y + 16) {
+        checkRecipe();
+    }
+});
 
-places_data = load_data()
-df = pd.DataFrame(places_data)
+function checkRecipe() {
+    if(userIngredients.length === 0) return;
 
-# 3. 상단 헤더 영역
-st.title("🍜 서울 라면맵 (Seoul Ramen Map)")
-st.markdown("호로록! 침 고이는 서울 속 나만의 라면 성지를 공유하고 찾아보세요.")
-st.divider()
+    let isMatch = true;
+    if(userIngredients.length !== currentOrder.items.length) {
+        isMatch = false;
+    } else {
+        for(let i=0; i<userIngredients.length; i++) {
+            if(userIngredients[i] !== currentOrder.items[i]) {
+                isMatch = false;
+                break;
+            }
+        }
+    }
 
-# 4. 사이드바 구성 (검색, 필터, 제보)
-with st.sidebar:
-    st.header("🔍 검색 및 필터")
-    search_query = st.text_input("식당 이름 검색", placeholder="예: 틈새라면")
-    max_price = st.slider("최대 가격 제한 (원)", min_value=3000, max_value=15000, value=10000, step=500)
+    if(isMatch) {
+        score += 100;
+        alert("✨ 완벽해요! 손님이 감동했어요!");
+    } else {
+        lives += 1;
+        score = Math.max(0, score - 50);
+        alert("💥 주문과 다른 요리예요! 손님이 화를 냅니다!");
+        if(lives >= 3) {
+            endGame();
+            return;
+        }
+    }
     
-    st.divider()
-    
-    st.subheader("🔥 나만의 라면집 제보하기")
-    
-    add_form = st.form("add_form", clear_on_submit=True)
-    with add_form:
-        new_name = st.text_input("가게 이름")
-        new_address = st.text_input("서울 주소 (예: 서울시 중구 ...)")
+    document.getElementById('score-board').innerText = `점수: ${score}점`;
+    document.getElementById('life-board').innerText = `실패: ${lives}/3`;
+    generateNewOrder();
+}
+
+// 렌더링 루프
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 배경 아기자기한 주방 타일 느낌
+    ctx.fillStyle = '#fffdfa';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 상단 주문서 영역 배경
+    ctx.fillStyle = '#fff0f5';
+    ctx.fillRect(50, 40, 600, 75);
+    ctx.strokeStyle = '#ffb6c1';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(50, 40, 600, 75);
+
+    // 손님 주문 표시
+    if(currentOrder) {
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`💡 손님의 주문: "${currentOrder.name}"`, canvas.width / 2, 70);
         
-        c1, c2 = st.columns(2)
-        with c1:
-            new_lat = st.number_input("위도 (Lat)", value=37.5665, format="%.4f")
-        with c2:
-            new_lon = st.number_input("경도 (Lon)", value=126.9780, format="%.4f")
-            
-        new_price = st.number_input("대표 메뉴 가격 (원)", min_value=1000, max_value=30000, value=5000, step=500)
-        new_rating = st.slider("평점", 1.0, 5.0, 4.5, 0.5)
-        new_comment = st.text_area("한 줄 추천 평")
-        
-        submitted = st.form_submit_button("맛집 등록하기")
-        if submitted:
-            if new_name and new_address:
-                new_entry = {
-                    "name": new_name,
-                    "address": new_address,
-                    "lat": float(new_lat),
-                    "lon": float(new_lon),
-                    "price": int(new_price),
-                    "rating": float(new_rating),
-                    "comment": new_comment
-                }
-                places_data.append(new_entry)
-                save_data(places_data)
-                st.success("성공적으로 등록되었습니다!")
-                st.rerun()
-            else:
-                st.warning("가게 이름과 주소를 입력해주세요.")
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#ff1493';
+        let recipeStr = currentOrder.items.map(id => ingredientTypes.find(i => i.id === id).name).join(' ➔ ');
+        ctx.fillText(`[레시피: ${recipeStr}]`, canvas.width / 2, 98);
+    }
 
-# 데이터 필터링
-filtered_df = df.copy()
-if search_query:
-    filtered_df = filtered_df[filtered_df['name'].str.contains(search_query, na=False)]
-filtered_df = filtered_df[filtered_df['price'] <= max_price]
+    // 중앙 냄비 그리기
+    ctx.beginPath();
+    ctx.arc(pot.x, pot.y, pot.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#e0ffff';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#20b2aa';
+    ctx.stroke();
 
-# 5. 메인 레이아웃: 좌측(지도) / 우측(카드 리스트)
-map_col, list_col = st.columns([1.6, 1])
+    ctx.fillStyle = '#20b2aa';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🍲 조리 냄비', pot.x, pot.y - 45);
 
-with map_col:
-    st.subheader("📍 서울 라면 맛집 지도")
-    
-    center_lat, center_lon = 37.5665, 126.9780
-    if not filtered_df.empty and search_query:
-        center_lat = filtered_df['lat'].mean()
-        center_lon = filtered_df['lon'].mean()
+    // 냄비에 담긴 현재 재료 표시
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#555';
+    let currentStr = userIngredients.length > 0 ? 
+        userIngredients.map(id => ingredientTypes.find(i => i.id === id).name).join(', ') : 
+        '재료를 아래에서 순서대로 넣으세요!';
+    ctx.fillText(currentStr, pot.x, pot.y + 5);
 
-    # 💡 데이터 누락 없이 밝고 화사한 스타일을 보여주는 OpenStreetMap.HOT 타일 적용
-    m = folium.Map(
-        location=[center_lat, center_lon], 
-        zoom_start=13, 
-        tiles="OpenStreetMap.HOT"
-    )
+    // 서빙 완료 버튼
+    ctx.fillStyle = '#ff69b4';
+    ctx.roundRect(serveButton.x - 70, serveButton.y - 18, 140, 36, 18);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('🍽️ 서빙하기!', serveButton.x, serveButton.y + 5);
 
-    # 마커 루프
-    for _, row in filtered_df.iterrows():
-        popup_html = f"""
-        <div style="font-family:sans-serif; width:180px;">
-            <h4 style="margin:0 0 5px 0; color:#FF4500;"><b>{row['name']}</b></h4>
-            <p style="margin:2px 0; font-size:13px;"><b>가격:</b> {row['price']:,}원</p>
-            <p style="margin:2px 0; font-size:13px;"><b>평점:</b> ⭐ {row['rating']}</p>
-            <p style="margin:5px 0 0 0; font-size:11px; color:#555;">{row['comment']}</p>
-        </div>
-        """
-        
-        folium.Marker(
-            location=[row['lat'], row['lon']],
-            popup=folium.Popup(popup_html, max_width=220),
-            tooltip=f"{row['name']} ({row['price']:,}원)",
-            icon=folium.Icon(color="orange", icon="utensils", prefix="fa")
-        ).add_to(m)
+    // 하단 재료 아이콘들 그리기
+    ctx.textAlign = 'center';
+    ctx.font = '12px sans-serif';
+    ingredientTypes.forEach(ing => {
+        ctx.beginPath();
+        ctx.arc(ing.x, ing.y, ing.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ing.color;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ff69b4';
+        ctx.stroke();
 
-    st_folium(m, width="100%", height=600)
+        ctx.fillStyle = '#333';
+        ctx.fillText(ing.name, ing.x, ing.y + 48);
+    });
 
-with list_col:
-    st.subheader(f"📋 맛집 목록 ({len(filtered_df)}곳)")
-    
-    with st.container(height=580):
-        if filtered_df.empty:
-            st.info("조건에 맞는 서울 라면 가게가 없습니다.")
-        else:
-            for _, row in filtered_df.iterrows():
-                with st.container():
-                    st.markdown(f"#### **{row['name']}**")
-                    st.caption(f"📍 {row['address']}")
-                    
-                    col_p, col_r = st.columns(2)
-                    with col_p:
-                        st.markdown(f"💰 **{row['price']:,}원**")
-                    with col_r:
-                        st.markdown(f"⭐ **{row['rating']} / 5.0**")
-                        
-                    if row['comment']:
-                        st.info(f"💬 {row['comment']}")
-                    st.markdown("---")
+    requestAnimationFrame(draw);
+}
+
+// 게임 최초 시작
+startGame();
+draw();
+</script>
+
+</body>
+</html>
+"""
+
+components.html(game_html, height=530, scrolling=False)
