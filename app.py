@@ -147,14 +147,14 @@ with map_col:
         center_lat = filtered_df['lat'].mean()
         center_lon = filtered_df['lon'].mean()
 
-    # 💡 API 키 제약 없이 상용 지도처럼 선명하고 깔끔한 Esri World Street Map 타일 적용
+    # 💡 데이터 누락 없이 밝고 화사한 스타일을 보여주는 OpenStreetMap.HOT 타일 적용
     m = folium.Map(
         location=[center_lat, center_lon], 
         zoom_start=13, 
-        tiles="Esri.WorldStreetMap"
+        tiles="OpenStreetMap.HOT"
     )
 
-    # 마커 루프 (라면 감성의 레드/오렌지 계열 마커 적용)
+    # 마커 루프
     for _, row in filtered_df.iterrows():
         popup_html = f"""
         <div style="font-family:sans-serif; width:180px;">
